@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux';
+import React from 'react';
 
 import LineChartCustom from '../components/Chart/LineChart';
 import PieChartCustom from '../components/Chart/PieChart';
 import BarChartCustom from '../components/Chart/BarChart';
-import RadarChartCustom from '../components/Chart/RadarChart';
+import PieChartTwo from '../components/Chart/PieChartTwo';
 
 import { Container, Row, Col, Label } from 'reactstrap';
 
@@ -37,7 +36,7 @@ const Chart = () => {
                 </Col>
                 <Col xs="6" className="chart__row__col">
                     <Label>Thống Kê Số Lượng Theo Danh Mục Theo Tháng / Năm</Label>
-                    <RadarChartCustom />
+                    <PieChartTwo />
                 </Col>
             </Row>
         </Container>

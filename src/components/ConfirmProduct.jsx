@@ -21,6 +21,8 @@ export default function ConfirmProduct() {
 
     const product = useSelector(state => state.product);
 
+    const token = useSelector(state => state.employee.token);
+
     const configNotify = {
         insert: "top",
         container: "top-right",
@@ -57,7 +59,7 @@ export default function ConfirmProduct() {
         const fetchAddProduct = async () => {
             var result = null;
             try {
-                result = await productAPI.addItem(product);
+                result = await productAPI.addItem(product, token);
 
             } catch (error) {
                 console.log("Failed to fetch options: ", error);
@@ -106,11 +108,14 @@ export default function ConfirmProduct() {
                                 display: 'flex',
                                 flexDirection: 'column',
                             }}>
-                                <Label >Danh mục: <strong>{product.CategoryId}</strong></Label>
                                 <Label >Mã sản phẩm: <strong>{product.ProductId}</strong></Label>
+                                <Label >Danh mục: <strong>{product.CategoryId}</strong></Label>
+                                <Label >Bộ sưu tập: <strong>{product.CollectionId}</strong></Label>
+                                <Label >Kiểu dáng: <strong>{product.FormId}</strong></Label>
                                 <Label >Tên sản phẩm: <strong>{product.Title}</strong></Label>
-                                <Label >Giá cũ: <strong>{product.OldPrice}</strong></Label>
-                                <Label >Giá mới: <strong>{product.UnitPrice}</strong></Label>
+                                <Label >Chất liệu: <strong>{product.Material}</strong></Label>
+                                <Label >Phong cách: <strong>{product.Style}</strong></Label>
+                                <Label >Giá: <strong>{product.UnitPrice}</strong></Label>
                                 <Label >Số lượng: <strong>{product.Quantity}</strong></Label>
                                 <Label >Danh sách màu:</Label>
                                 <div className="color-picker">

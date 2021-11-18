@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from "react-router-dom";
 import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import categoryAPI from '../api/categoryAPI'
-import { add, refresh } from '../slice/productSlice';
+import productAPI from '../api/productAPI'
+import { refresh } from '../slice/productSlice';
 
 import { Button, FormGroup, Label, Input } from 'reactstrap';
 import InputField from '../components/InputField';
-import SelectField from '../components/SelectField';
 import { FastField, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -14,12 +15,16 @@ import { store } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css'
 
 import firebase from '../firebase/firebase'
-function AddProduct() {
+
+function EditProduct() {
+
+    const product = useSelector(state => state.product);
+
+    const token = useSelector(state => state.employee.token);
 
     const dispatch = useDispatch();
 
     const history = useHistory();
-
     const configNotify = {
         insert: "top",
         container: "top-right",
@@ -32,15 +37,12 @@ function AddProduct() {
     }
 
     const initialValues = {
-        CategoryId: '',
-        CollectionId: '',
-        FormId: '',
-        Title: '',
-        Material: '',
-        Style: '',
-        Description: '',
-        UnitPrice: 1000,
-        Quantity: 1,
+        ProductId: product.ProductId,
+        Title: product.Title,
+        Material: product.Material,
+        Style: product.Style,
+        Description: product.Description,
+        UnitPrice: product.UnitPrice,
     }
 
     const initialImgValues = {
@@ -98,44 +100,54 @@ function AddProduct() {
     }
 
     const handleSubmit = (values) => {
-        if (img.downloadURL === null) {
-            alert("Vui lòng chọn ảnh!");
-        }
-        else {
-            const fetchGetProductId = async () => {
-                var ProductId = '';
-                try {
-                    ProductId = await categoryAPI.getProductId(values.CategoryId);
-                } catch (error) {
-                    console.log("Failed to fetch user: ", error);
-                }
-                if (Number(ProductId.slice(values.CategoryId.length)) + 1 < 10) {
-                    var newId = values.CategoryId + "0" + (Number(ProductId.slice(2)) + 1);
-                } else {
-                    var newId = values.CategoryId + (Number(ProductId.slice(values.CategoryId.length)) + 1);
-                }
-                const product = {
-                    ProductId: newId,
-                    Description: values.Description,
-                    CategoryId: values.CategoryId,
-                    CollectionId: values.CollectionId,
-                    FormId: values.FormId,
-                    URLPicture: img.downloadURL,
-                    UnitPrice: values.UnitPrice,
-                    Title: values.Title,
-                    Material: values.Material,
-                    Style: values.Style,
-                    OldPrice: values.UnitPrice - 40000,
-                    Quantity: values.Quantity,
-                    colors: [],
-                    sizes: [],
-                }
-                const action = add(product);
-                dispatch(action);
-                history.push('/productcolor');
+        // console.log('xác nhận');
+        const configNotify = {
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animate__animated", "animate__fadeIn"],
+            animationOut: ["animate__animated", "animate__fadeOut"],
+            dismiss: {
+                duration: 2000,
+                onScreen: true
             }
-            fetchGetProductId();
         }
+        const neWProduct = {
+            ProductId: product.ProductId,
+            Description: values.Description,
+            URLPicture: img.downloadURL ? img.downloadURL : product.URLPicture,
+            UnitPrice: values.UnitPrice,
+            Title: values.Title,
+            Material: values.Material,
+            Style: values.Style,
+            OldPrice: values.UnitPrice - 30000,
+        }
+        console.log(neWProduct);
+        const fetchUpdate = async () => {
+            var result = null;
+            try {
+                result = await productAPI.update(neWProduct, token);
+            } catch (error) {
+                console.log("Failed to fetch user: ", error);
+            }
+            if (result.successful == true) {
+                store.addNotification({
+                    title: "Wonderful!",
+                    message: `Chỉnh sửa sản phẩm thành công`,
+                    type: "success",
+                    ...configNotify
+                });
+                history.push('/product');
+            } else {
+                store.addNotification({
+                    title: "Chỉnh sửa thất bại!",
+                    message: `Đã có lỗi xảy ra, vui lòng thử lại sau!`,
+                    type: "danger",
+                    ...configNotify
+                });
+                history.push('/product');
+            }
+        }
+        fetchUpdate();
     }
 
     const handleCancel = () => {
@@ -145,40 +157,6 @@ function AddProduct() {
     }
 
     var CATEGORY_OPTIONS = [];
-    const COLLECTION_OPTIONS = [{
-        value: 'MX2021',
-        label: "Mùa xuân"
-    },
-    {
-        value: 'MD2021',
-        label: "Mùa đông"
-    },
-    {
-        value: 'MT2021',
-        label: "Mùa thu"
-    },
-    {
-        value: 'MH2021',
-        label: "Mùa hè"
-    }];
-    const FORM_OPTIONS = [
-        {
-            value: 'Oversize',
-            label: "Quá cỡ"
-        },
-        {
-            value: 'Regular',
-            label: "Thường"
-        },
-        {
-            value: 'Fitted',
-            label: "Vừa vặn"
-        },
-        {
-            value: 'ExtraSlim',
-            label: "Thon gọn"
-        },
-    ];
 
     useEffect(() => {
         const fetchOptions = async () => {
@@ -200,22 +178,18 @@ function AddProduct() {
     }, [])
 
     const validationSchema = Yup.object().shape({
-        CategoryId: Yup.string().required('Danh mục không được bỏ trống!.'),
-        CollectionId: Yup.string().required('Bộ sưu tập không được bỏ trống!.'),
-        FormId: Yup.string().required('Kiểu dáng không được bỏ trống!.'),
         Title: Yup.string().required('Tiêu đề không được bỏ trống'),
-        Material: Yup.string().required('Tiêu đề không được bỏ trống'),
-        Style: Yup.string().required('Tiêu đề không được bỏ trống'),
+        Material: Yup.string().required('Chất liệu không được bỏ trống'),
+        Style: Yup.string().required('Phong cách không được bỏ trống'),
         Description: Yup.string().required('Mô tả không được bỏ trống'),
         UnitPrice: Yup.number().min(1, 'Giá phải lớn hơn 0').integer('Giá phải là số nguyên').required('Giá mới không được bỏ trống'),
-        Quantity: Yup.number().min(1, 'Số lượng phải lớn hơn 0').integer('Số lượng là số nguyên').required('Số lượng không được bỏ trống'),
     });
 
     return (
         <div className="login">
             <div className="box">
                 <div className="login-box" >
-                    <h2>THÊM SẢN PHẨM MỚI</h2>
+                    <h2>SỬA SẢN PHẨM</h2>
                     <Formik
                         initialValues={initialValues}
                         validationSchema={validationSchema}
@@ -228,28 +202,13 @@ function AddProduct() {
                             return (
                                 <Form>
                                     <FastField
-                                        name="CategoryId"
-                                        component={SelectField}
+                                        name="ProductId"
+                                        component={InputField}
 
-                                        label="Danh mục - Bộ sưu tập - Kiểu dáng"
-                                        placeholder="Chọn danh mục sản phẩm ..."
-                                        options={CATEGORY_OPTIONS}
-                                    />
-                                    <FastField
-                                        name="CollectionId"
-                                        component={SelectField}
-
-                                        // label="Danh mục"
-                                        placeholder="Chọn bộ sưu tập của sản phẩm ..."
-                                        options={COLLECTION_OPTIONS}
-                                    />
-                                    <FastField
-                                        name="FormId"
-                                        component={SelectField}
-
-                                        // label="Danh mục"
-                                        placeholder="Chọn kiểu dáng sản phẩm ..."
-                                        options={FORM_OPTIONS}
+                                        label="Mã sản phẩm"
+                                        placeholder="Nhập tiêu đề sản phẩm ..."
+                                        type="text"
+                                        disabled="true"
                                     />
                                     <FastField
                                         name="Title"
@@ -268,7 +227,7 @@ function AddProduct() {
                                         placeholder="Nhập mô tả của sản phẩm ..."
                                         type="textarea"
                                     />
-                                    <FastField
+                                     <FastField
                                         name="Material"
                                         component={InputField}
 
@@ -276,7 +235,7 @@ function AddProduct() {
                                         placeholder="Nhập chất liệu sản phẩm ..."
                                         type="text"
                                     />
-                                    <FastField
+                                     <FastField
                                         name="Style"
                                         component={InputField}
 
@@ -289,15 +248,7 @@ function AddProduct() {
                                         component={InputField}
 
                                         label="Giá"
-                                        placeholder="Nhập giá mới của sản phẩm ..."
-                                        type="number"
-                                    />
-                                    <FastField
-                                        name="Quantity"
-                                        component={InputField}
-
-                                        label="Số lượng"
-                                        placeholder="Nhập số lượng sản phẩm ..."
+                                        placeholder="Nhập giá của sản phẩm ..."
                                         type="number"
                                     />
                                     <div style={{
@@ -311,20 +262,31 @@ function AddProduct() {
                                         <Input type="file" name="file" id="file" onChange={handleFileChange} />
                                     </div>
                                     <Button color="info" onClick={handleUpload}>Upload</Button>{' '}
-                                    <img
-                                        className="ref"
-                                        src={img.downloadURL || "https://via.placeholder.com/60x60"}
-                                        alt="Uploaded Images"
-                                        height="60"
-                                        width="60"
-                                        objectfit="cover"
-                                    />
+                                    {img.downloadURL ?
+                                        <img
+                                            className="ref"
+                                            src={img.downloadURL || "https://via.placeholder.com/80x80"}
+                                            alt="Uploaded Images"
+                                            height="80"
+                                            width="80"
+                                            objectfit="cover"
+                                        />
+                                        :
+                                        <img
+                                            className="ref"
+                                            src={product.URLPicture}
+                                            alt="Uploaded Images"
+                                            height="80"
+                                            width="80"
+                                            objectfit="cover"
+                                        />
+                                    }
 
                                     <FormGroup>
                                         <Button type="submit" color='success'>
-                                            Tiếp theo
+                                            Xác Nhận
                                         </Button>{' '}
-                                        <Button color='danger' onClick = {handleCancel}>
+                                        <Button color='danger' onClick={handleCancel}>
                                             Hủy
                                         </Button>{' '}
                                     </FormGroup>
@@ -339,4 +301,4 @@ function AddProduct() {
     );
 }
 
-export default AddProduct;
+export default EditProduct;

@@ -1,7 +1,8 @@
 import React, { useRef} from 'react'
 import { Link, useLocation, useHistory } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-// import logo from '../assets/images/Logo-2.png';
+import { useSelector, useDispatch } from 'react-redux'
+import { logout } from '../slice/employeeSlice';
+import logo from '../assets/Logo-2.png';
 
 const mainNav = [
     {
@@ -19,14 +20,20 @@ const mainNav = [
     {
         display: "Tài Khoản",
         path: "/user"
+    }, 
+    {
+        display: "Giảm giá",
+        path: "/discount"
     }
 ]
 
 const Header = () => {
 
-    const history = useHistory();
+    // const history = useHistory();
 
-    const user = useSelector(state => state.user.user);
+    const dispatch = useDispatch();
+
+    const user = useSelector(state => state.employee.user);
 
     const { pathname } = useLocation()
     const activeNav = mainNav.findIndex(e => e.path === pathname)
@@ -35,17 +42,19 @@ const Header = () => {
 
     const menuToggle = () => menuLeft.current.classList.toggle('active')
 
-    const handleProfile = () => {
-        history.push('/profile');
+    const handleLogout = () => {
+        const action = logout();
+        dispatch(action);
     }
+
     return (
         <div className="header" >
             <div className="container">
-                {/* <div className="header__logo">
+                <div className="header__logo">
                     <Link to="/">
                         <img src={logo} alt="" />
                     </Link>
-                </div> */}
+                </div>
                 <div className="header__menu">
                     <div className="header__menu__mobile-toggle" onClick={menuToggle}>
                         <i className='bx bx-menu-alt-left'></i>
@@ -69,20 +78,16 @@ const Header = () => {
                         }
                     </div>
                     <div className="header__menu__right">
-                        {user.Email !== '' ? 
                             <div className="header__menu__item header__menu__right__item">
-                                <img className="header__menu__right__item__img" src={user.URLPicture} onClick = {handleProfile}/>
-                                <span className="header__menu__right__item__span" onClick = {handleProfile}>Xin Chào: </span>
-                                <span className="header__menu__right__item__name" onClick = {handleProfile}>{user.FullName}</span>
+                                <span className="header__menu__right__item__span">Xin Chào: </span>
+                                <span className="header__menu__right__item__name" >{user.FullName}</span>
+                                <span className="header__menu__right__item__name" style={{paddingLeft:"10px"}}> | </span>
+                                <span className="header__menu__right__item__name" onClick = {handleLogout} style= {{
+                                    color: "red",
+                                    cursor: "pointer",
+                                    paddingLeft: "10px"
+                                }}> Đăng Xuất </span>
                             </div>
-                            :
-                            <div className="header__menu__item header__menu__right__item">
-                                <Link to="/login">
-                                    <a className="header__menu__right__item__link">Đăng Nhập</a>
-                                </Link>
-                            </div>
-                        }
-                        
                     </div>
                 </div>
             </div>

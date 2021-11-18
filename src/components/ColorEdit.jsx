@@ -1,22 +1,32 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import colors from '../assets/colors';
 import Switch from "react-switch";
 import { Label, Button, Input, } from 'reactstrap'
-
+import colorApi from '../api/colorAPI';
 import { useHistory } from "react-router-dom";
-import { useDispatch } from 'react-redux';
-import { updateColor, refresh } from '../slice/productSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { refresh } from '../slice/productSlice';
 
 import { store } from 'react-notifications-component';
-import 'react-notifications-component/dist/theme.css'
+import 'react-notifications-component/dist/theme.css';
+
+// confirm alert
+import { confirmAlert } from 'react-confirm-alert'; // Import
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 
 import firebase from '../firebase/firebase'
 
-export default function ColorRegister() {
+export default function ColorEdit() {
 
     const history = useHistory();
 
     const dispatch = useDispatch();
+
+    const colorList = useSelector(state => state.product.colors);
+
+    const ProductId = useSelector(state => state.product.ProductId);
+
+    const token = useSelector(state => state.employee.token);
 
     const configNotify = {
         insert: "top",
@@ -31,26 +41,64 @@ export default function ColorRegister() {
 
     let ColorTemp = [];
     colors.forEach(color => {
-        const colorItem = {
-            checked: false,
-            color: color.color,
-            english: color.english,
-            img: null,
-            URL: null,
+        const temp = colorList.find(colorItem => colorItem.Color === color.english);
+        console.log(temp);
+        if (temp !== undefined) {
+            const colorItem = {
+                checked: true,
+                color: color.color,
+                english: color.english,
+                img: null,
+                URL: temp.URLPicture,
+            }
+            ColorTemp.push(colorItem);
+        } else {
+            const colorItem = {
+                checked: false,
+                color: color.color,
+                english: color.english,
+                img: null,
+                URL: null,
+            }
+            ColorTemp.push(colorItem);
         }
-        ColorTemp.push(colorItem);
     })
 
     const [colorItems, setColorItems] = useState(ColorTemp);
 
     const handleSwitchChange = (index) => {
-        var ColorTemp = [];
-        const check = colorItems[index].checked;
-        ColorTemp = [...colorItems.slice(0, index), {
-            ...colorItems[index],
-            checked: !check,
-        }, ...colorItems.slice(index + 1)]
-        setColorItems(ColorTemp);
+        const item = {
+            color: colorItems[index].english,
+            productId: ProductId
+        };
+        console.log(item);
+        const fetchCheckColor = async () => {
+            var result = null;
+            try {
+                result = await colorApi.checkColor(item, token);
+
+            } catch (error) {
+                console.log("Failed to fetch options: ", error);
+            }
+
+            if (result.successful === true) {
+                store.addNotification({
+                    title: "Màu đã tồn tại trong đơn hàng!!",
+                    message: `Không thể chỉnh sửa`,
+                    type: "warning",
+                    ...configNotify
+                });
+            } else {
+                var ColorTemp = [];
+                const check = colorItems[index].checked;
+                ColorTemp = [...colorItems.slice(0, index), {
+                    ...colorItems[index],
+                    checked: !check,
+                }, ...colorItems.slice(index + 1)]
+                setColorItems(ColorTemp);
+            }
+        }
+        fetchCheckColor();
     }
 
     const handleFileChange = (e, index) => {
@@ -101,7 +149,7 @@ export default function ColorRegister() {
         }
     }
 
-    const handleNext = () => {
+    const handleSubmit = () => {
         var check = false;
         var colors = [];
         colorItems.forEach(color => {
@@ -125,15 +173,67 @@ export default function ColorRegister() {
                 colorItems.forEach(color => {
                     if (color.checked === true && color.URL !== null) {
                         colors.push({
-                            Color: color.color,
                             URLPicture: color.URL,
                             English: color.english,
                         })
                     }
                 })
-                const action = updateColor(colors);
-                dispatch(action);
-                history.push('/productsize');
+
+                const item = {
+                    ProductId: ProductId,
+                    colors: colors
+                }
+
+                confirmAlert({
+                    title: 'Sửa Màu',
+                    message: 'Bạn có chắc chắc muốn sửa những màu này không?',
+                    buttons: [
+                        {
+                            label: 'Có',
+                            onClick: () => fetchEditColor()
+                        },
+                        {
+                            label: 'Không',
+                            onClick: () => {
+                                history.push(`/editcolor`);
+                            }
+                        }
+                    ],
+                    closeOnEscape: true,
+                    closeOnClickOutside: true,
+                });
+
+                const fetchEditColor = async () => {
+                    var result = null;
+                    try {
+                        result = await colorApi.update(item, token);
+
+                    } catch (error) {
+                        console.log("Failed to fetch options: ", error);
+                    }
+
+                    if (result.successful == true) {
+                        store.addNotification({
+                            title: "Wonderfull!",
+                            message: `Sửa màu thành công!`,
+                            type: "success",
+                            ...configNotify
+                        });
+                        const action = refresh();
+                        dispatch(action);
+                        history.push(`/product`);
+                    } else {
+                        store.addNotification({
+                            title: "Error!",
+                            message: `Sửa màu thất bại, vui lòng thử lại sau!`,
+                            type: "danger",
+                            ...configNotify
+                        });
+                        const action = refresh();
+                        dispatch(action);
+                        history.push(`/product`);
+                    }
+                }
             }
         }
     }
@@ -150,7 +250,7 @@ export default function ColorRegister() {
                 <div className="login-box" style={{
                     width: "600px"
                 }}>
-                    <h2>ĐĂNG KÝ MÀU</h2>
+                    <h2>SỬA MÀU</h2>
                     <div className="color-picker">
                         {colors.map((color, index) => (
                             <div className="color-picker-item" key={index}>
@@ -197,8 +297,8 @@ export default function ColorRegister() {
                                 <div />
                         ))}
                     </div>
-                    <Button color='success' onClick={handleNext}>
-                        Tiếp theo
+                    <Button color='success' onClick={handleSubmit}>
+                        Xác Nhận
                     </Button>{' '}
                     <Button color='danger' onClick={handleCancel}>
                         Hủy

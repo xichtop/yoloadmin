@@ -1,24 +1,15 @@
-import React from 'react';
-import { useHistory } from "react-router-dom";
-import { useDispatch } from 'react-redux';
-import userAPI from '../api/userAPI'
-import { login } from '../slice/userSlice';
-
-import { Button, FormGroup, Label } from 'reactstrap';
-import InputField from './InputField';
 import { FastField, Form, Formik } from 'formik';
-import PropTypes from 'prop-types';
-import * as Yup from 'yup';
-
+import React from 'react';
 import { store } from 'react-notifications-component';
+import 'react-notifications-component/dist/theme.css';
+import { useDispatch } from 'react-redux';
+import { useHistory } from "react-router-dom";
+import { Button, FormGroup } from 'reactstrap';
+import * as Yup from 'yup';
+import employeeAPI from '../api/employeeAPI';
+import { login } from '../slice/employeeSlice';
+import InputField from './InputField';
 
-Login.propTypes = {
-    onSubmit: PropTypes.func,
-};
-
-Login.defaultProps = {
-    onSubmit: null,
-}
 
 function Login() {
 
@@ -27,7 +18,7 @@ function Login() {
     const history = useHistory();
 
     const initialValues = {
-        username: '',
+        employeeId: '',
         password: '',
     }
 
@@ -43,13 +34,13 @@ function Login() {
             }
         }
         const user = {
-            email: values.username,
+            email: values.employeeId,
             password: values.password,
         }
         const fetchLogin = async () => {
             var result = {};
             try {
-                result = await userAPI.login(user);
+                result = await employeeAPI.login(user);
             } catch (error) {
                 console.log("Failed to fetch user: ", error);
             }
@@ -64,31 +55,34 @@ function Login() {
             } else {
                 store.addNotification({
                     title: "Đăng nhập thành công!",
-                    message: `Xin chào ${values.username}`,
+                    message: `Xin chào ${values.employeeId}`,
                     type: "success",
                     ...configNotify
                 });
 
-                const user = result.user;
+                const user = result.employee;
                 const token = result.accessToken;
+
+                // const user = {
+                //         EmployeeId: "NV001",
+                //         FullName: "Lê Xích Tốp",
+                //         Workphone: "0377025912",
+                //         Password: "123456"
+                // }
+                // const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6Ik5WMDAxIiwiaWF0IjoxNjMyMTQxMTM0fQ.lAUBYnKbD4y36NSRb7dj-vI-q2lf8Hewl-JqLmVeyO0";
                 const action = login({
                     user,
                     token
                 })
                 dispatch(action);
-                history.push('/');
             }
         }
         fetchLogin();
     }
 
-    const handleRegister = () => {
-        history.push('/register');
-    }
-
 
     const validationSchema = Yup.object().shape({
-        username: Yup.string().email().required('Email không được bỏ trống!.'),
+        employeeId: Yup.string().required('Mã nhân viên không được bỏ trống!.'),
         password: Yup.string().required('Mật khẩu không được bổ trống'),
     });
 
@@ -110,11 +104,11 @@ function Login() {
                             return (
                                 <Form>
                                     <FastField
-                                        name="username"
+                                        name="employeeId"
                                         component={InputField}
 
-                                        label="Email"
-                                        placeholder="Nhập Email của bạn ..."
+                                        label="Mã nhân viên"
+                                        placeholder="Nhập mã nhân viên của bạn ..."
                                     />
 
                                     <FastField
@@ -125,20 +119,10 @@ function Login() {
                                         placeholder="Nhập mật khẩu của bạn ..."
                                         type="password"
                                     />
-
                                     <FormGroup>
                                         <Button type="submit" color='success'>
                                             Đăng nhập
                                         </Button>
-                                    </FormGroup>
-
-                                    <FormGroup>
-                                        <Label >
-                                            Chưa có tài khoản?
-                                </Label>
-                                        <a className="login-link" onClick={handleRegister}>
-                                            Đăng ký
-                                        </a>
                                     </FormGroup>
 
                                 </Form>

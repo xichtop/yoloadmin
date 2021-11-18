@@ -4,8 +4,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 import Datetime from "react-datetime";
 import 'react-datetime/css/react-datetime.css';
+import { useSelector } from 'react-redux';
 
 const LineChartCustom = (props) => {
+
+    const token = useSelector(state => state.employee.token);
 
     const [year, setYear] = useState(2021);
 
@@ -15,7 +18,7 @@ const LineChartCustom = (props) => {
         const fetchOrders = async () => {
             var orders = [];
             try {
-                orders = await orderAPI.getStatisticByYear(2021);
+                orders = await orderAPI.getStatisticByYear(2021, token);
             } catch (error) {
                 console.log("Failed to fetch options: ", error);
             }
@@ -28,7 +31,7 @@ const LineChartCustom = (props) => {
         const fetchOrders = async () => {
             var orders = [];
             try {
-                orders = await orderAPI.getStatisticByYear(year);
+                orders = await orderAPI.getStatisticByYear(year, token);
             } catch (error) {
                 console.log("Failed to fetch options: ", error);
             }

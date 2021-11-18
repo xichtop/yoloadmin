@@ -7,6 +7,7 @@ import { schemeCategory10 } from 'd3-scale-chromatic';
 
 import Datetime from "react-datetime";
 import 'react-datetime/css/react-datetime.css';
+import { useSelector } from 'react-redux';
 
 const colors = scaleOrdinal(schemeCategory10).range();
 
@@ -31,6 +32,8 @@ TriangleBar.propTypes = {
 
 export default function BarChartCustom() {
 
+    const token = useSelector(state => state.employee.token);
+
     const [year, setYear] = useState(2021);
 
     const [month, setMonth] = useState(8);
@@ -41,7 +44,7 @@ export default function BarChartCustom() {
         const fetchOrders = async () => {
             var orders = [];
             try {
-                orders = await orderAPI.getStatisticByMonthAndYear(8,2021);
+                orders = await orderAPI.getStatisticByMonthAndYear(8,2021, token);
             } catch (error) {
                 console.log("Failed to fetch options: ", error);
             }
@@ -54,7 +57,7 @@ export default function BarChartCustom() {
         const fetchOrders = async () => {
             var orders = [];
             try {
-                orders = await orderAPI.getStatisticByMonthAndYear(month, year);
+                orders = await orderAPI.getStatisticByMonthAndYear(month, year, token);
             } catch (error) {
                 console.log("Failed to fetch options: ", error);
             }
@@ -69,7 +72,7 @@ export default function BarChartCustom() {
                 <span>Vui lòng chọn tháng / năm: </span>
                 <Datetime dateFormat="YYYY-MM" initialValue={'2021-08'} timeFormat="" onChange={(date) => {
                     setYear(date.year());
-                    setMonth(date.month());
+                    setMonth(date.month()+1);
                 }} />
             </div>
             <ResponsiveContainer width="100%" height="80%">

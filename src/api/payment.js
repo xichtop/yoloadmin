@@ -1,8 +1,8 @@
 import axiosClient from "./axiosClient";
 
-const shippingApi = {
+const paymentApi = {
   getAll: (token) => {
-    const url = '/shipping';
+    const url = '/payment';
     return axiosClient.get(url, {headers: {
       "Content-type": "Application/json",
       "Authorization": `Bearer ${token}`
@@ -11,4 +11,4 @@ const shippingApi = {
   },
 }
 
-export default shippingApi;
+export default paymentApi;

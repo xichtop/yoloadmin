@@ -1,29 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import userAPI from '../api/userAPI';
-import { Table, Pagination, PaginationItem, PaginationLink, ButtonToggle } from 'reactstrap';
+import { ButtonToggle } from 'reactstrap';
 import { store } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css';
 import { useHistory } from "react-router-dom";
+import { useSelector } from 'react-redux';
+
+//React bootstrap table
+import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
+import BootstrapTable from 'react-bootstrap-table-next';
+import paginationFactory from 'react-bootstrap-table2-paginator';
+import filterFactory, { textFilter, selectFilter } from 'react-bootstrap-table2-filter';
+import ToolkitProvider from 'react-bootstrap-table2-toolkit';
 
 // confirm alert
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 
-const UserTable = () => {
+const EditButton = (props) => {
 
     const history = useHistory();
 
-    const [check, setCheck] = useState(false);
+    const email = props.row.Email;
 
-    const [users, setUsers] = useState([]);
+    const status = props.row.Status;
 
-    const [usersTemp, setUsersTemp] = useState([]);
+    const handleCheck = props.handleCheck;
 
-    const [paginationMax, setPaginationMax] = useState(1);
-
-    const [paginationIndex, setPaginationIndex] = useState(1);
-    
-    const [paginationBetween, setPaginationBetween] = useState(2);
+    const token = useSelector(state => state.employee.token);
 
     const configNotify = {
         insert: "top",
@@ -36,61 +40,7 @@ const UserTable = () => {
         }
     }
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            var users = [];
-            try {
-                users = await userAPI.getAll();
-            } catch (error) {
-                console.log("Failed to fetch options: ", error);
-            }
-            console.log(users);
-            setUsers(users);
-            setUsersTemp(users.slice(0, 10));
-            const pagiMax = Math.floor(users.length / 10) + 1;
-            setPaginationMax(pagiMax);
-        }
-        fetchOrders();
-    }, []);
-
-    useEffect(() => {
-        const fetchUsers = async () => {
-            var users = [];
-            try {
-                users = await userAPI.getAll();
-            } catch (error) {
-                console.log("Failed to fetch options: ", error);
-            }
-            console.log(users);
-            setUsers(users);
-            const newUsers = users.slice(10 * (paginationIndex - 1), 10 * paginationIndex);
-            setUsersTemp(newUsers);
-            setCheck(false);
-        }
-        fetchUsers();
-    }, [check]);
-
-    useEffect(() => {
-        const newUsers = users.slice(10 * (paginationIndex - 1), 10 * paginationIndex);
-        setUsersTemp(newUsers);
-        if (paginationIndex > 1 && paginationIndex < paginationMax) {
-            setPaginationBetween(paginationIndex);
-        }
-    }, [paginationIndex])
-
-    const handleCurrent = (index) => {
-        setPaginationIndex(index);
-    }
-
-    const handleMinus = () => {
-        setPaginationIndex(paginationIndex - 1);
-    }
-
-    const handlePlus = () => {
-        setPaginationIndex(paginationIndex + 1);
-    }
-
-    const hanleActive = (email) => {
+    const hanleActive = () => {
         const newUser = {
             email: email.trim(),
             newStatus: 'On',
@@ -98,7 +48,7 @@ const UserTable = () => {
         const fetchUpdateUser = async () => {
             var result = {};
             try {
-                result = await userAPI.updateStatus(newUser);
+                result = await userAPI.updateStatus(newUser, token);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -109,7 +59,7 @@ const UserTable = () => {
                     type: "success",
                     ...configNotify
                 });
-                setCheck(true);
+                handleCheck();
                 history.push('/user');
             } else {
                 store.addNotification({
@@ -118,7 +68,7 @@ const UserTable = () => {
                     type: "warning",
                     ...configNotify
                 });
-                setCheck(true);
+                handleCheck();
                 history.push('/user');
             }
         }
@@ -126,23 +76,23 @@ const UserTable = () => {
             title: 'Kích Hoạt Tài Khoản',
             message: 'Bạn có chắc chắc muốn kích hoạt tài khoản này không?',
             buttons: [
-              {
-                label: 'Có',
-                onClick: () => fetchUpdateUser()
-              },
-              {
-                label: 'Không',
-                onClick: () => {
-                    history.push('/user');
+                {
+                    label: 'Có',
+                    onClick: () => fetchUpdateUser()
+                },
+                {
+                    label: 'Không',
+                    onClick: () => {
+                        history.push('/user');
+                    }
                 }
-              }
             ],
             closeOnEscape: true,
             closeOnClickOutside: true,
         });
     }
 
-    const hanleLock = (email) => {
+    const hanleLock = () => {
         const newUser = {
             email: email.trim(),
             newStatus: 'Off',
@@ -150,7 +100,7 @@ const UserTable = () => {
         const fetchUpdateUser = async () => {
             var result = {};
             try {
-                result = await userAPI.updateStatus(newUser);
+                result = await userAPI.updateStatus(newUser, token);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -161,7 +111,7 @@ const UserTable = () => {
                     type: "success",
                     ...configNotify
                 });
-                setCheck(true);
+                handleCheck();
                 history.push('/user');
             } else {
                 store.addNotification({
@@ -170,7 +120,7 @@ const UserTable = () => {
                     type: "warning",
                     ...configNotify
                 });
-                setCheck(true);
+                handleCheck();
                 history.push('/user');
             }
         }
@@ -178,21 +128,135 @@ const UserTable = () => {
             title: 'Khóa Tài Khoản',
             message: 'Bạn có chắc chắc muốn khóa tài khoản này không?',
             buttons: [
-              {
-                label: 'Có',
-                onClick: () => fetchUpdateUser()
-              },
-              {
-                label: 'Không',
-                onClick: () => {
-                    history.push('/user');
+                {
+                    label: 'Có',
+                    onClick: () => fetchUpdateUser()
+                },
+                {
+                    label: 'Không',
+                    onClick: () => {
+                        history.push('/user');
+                    }
                 }
-              }
             ],
             closeOnEscape: true,
             closeOnClickOutside: true,
         });
     }
+    return (
+        <div>
+            {status.trim() === 'Off' ?
+                <td>
+                    <ButtonToggle color="info" onClick={hanleActive}>Kích Hoạt</ButtonToggle>
+                </td>
+                :
+                <td>
+                    <ButtonToggle color="danger" onClick={hanleLock}>Khóa</ButtonToggle>
+                </td>
+            }
+        </div>
+    );
+};
+
+const UserTable = () => {
+
+    const token = useSelector(state => state.employee.token);
+
+    const [users, setUsers] = useState([]);
+
+    const [check, setCheck] = useState(false);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            var users = [];
+            try {
+                users = await userAPI.getAll(token);
+            } catch (error) {
+                console.log("Failed to fetch options: ", error);
+            }
+            setUsers(users);
+        }
+        fetchOrders();
+    }, []);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            var users = [];
+            try {
+                users = await userAPI.getAll(token);
+            } catch (error) {
+                console.log("Failed to fetch options: ", error);
+            }
+            setUsers(users);
+        }
+        fetchOrders();
+    }, [check]);
+
+    const handleCheck = () => {
+        setCheck(!check);
+    }
+
+    const cellButton = (cell, row, rowIndex) => (
+        <EditButton cell={cell} row={row} rowIndex={rowIndex} handleCheck = {handleCheck}/>
+    )
+
+    const selectOptions = {
+        On: 'On',
+        Off: 'Off',
+    };
+
+    const columns = [{
+        dataField: 'Email',
+        text: 'Email',
+        sort: true,
+        filter: textFilter({ placeholder: 'Nhập email ...', }),
+    }, {
+        dataField: 'FullName',
+        text: 'Họ Tên',
+        sort: true,
+        filter: textFilter({ placeholder: 'Nhập họ tên ...', }),
+    }, {
+        dataField: 'Phone',
+        text: 'Số điện thoại',
+        sort: true,
+        filter: textFilter({ placeholder: 'Nhập số điện thoại ...', }),
+    },
+    {
+        dataField: 'Address',
+        text: 'Địa chỉ',
+        sort: true,
+        filter: textFilter({ placeholder: 'Nhập địa chỉ ...', }),
+    },
+    {
+        dataField: 'Status',
+        text: 'Trạng Thái',
+        sort: true,
+        formatter: cell => selectOptions[cell],
+        filter: selectFilter({
+            options: selectOptions
+        })
+    },
+    {
+        dataField: "DiscountId",
+        text: "Thao Tác",
+        formatter: cellButton,
+        sort: true
+    }];
+
+    const MyExportCSV = (props) => {
+        const handleClick = () => {
+            props.onExport();
+        };
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-around',
+            }}>
+                <button className="btn btn-info" onClick={handleClick}>Xuất File</button>
+            </div>
+        );
+    };
 
     return (
         <div >
@@ -201,108 +265,37 @@ const UserTable = () => {
                     Danh Sách Khách Hàng
                 </div>
             </div>
-            <div style={{
-                height: "500px"
-            }} >
-                <Table striped hover bordered responsive>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Email</th>
-                            <th>Họ và Tên</th>
-                            <th>Số điện thoại</th>
-                            <th>Địa chỉ</th>
-                            <th>Trạng Thái</th>
-                            <th>Thao Tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {usersTemp.map((user, index) => (
-                            <tr key={index} >
-                                <th scope="row">{index + 1}</th>
-                                <td>{user.Email}</td>
-                                <td>{user.FullName}</td>
-                                <td>{user.Phone}</td>
-                                <td>{user.Address}</td>
-                                <td>{user.Status}</td>
-                                {user.Status.trim() === 'Off' ?
-                                    <td>
-                                        <ButtonToggle color="info" onClick={() => hanleActive(user.Email)}>Kích Hoạt</ButtonToggle>
-                                    </td>
-                                    :
-                                    <td>
-                                        <ButtonToggle color="danger" onClick={() => hanleLock(user.Email)}>Khóa</ButtonToggle>
-                                    </td>
-                                }
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </div>
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-around',
-            }}>
-                <Pagination aria-label="Page navigation example">
-                    {paginationIndex === 1 ?
-                        <PaginationItem disabled>
-                            <PaginationLink previous />
-                        </PaginationItem>
-                        :
-                        <PaginationItem>
-                            <PaginationLink previous onClick={handleMinus} />
-                        </PaginationItem>}
-                    {paginationBetween - 1 === paginationIndex ?
-                        <PaginationItem active>
-                            <PaginationLink onClick={() => handleCurrent(paginationBetween - 1)}>
-                                {paginationBetween - 1}
-                            </PaginationLink>
-                        </PaginationItem>
-                        :
-                        <PaginationItem>
-                            <PaginationLink onClick={() => handleCurrent(paginationBetween - 1)}>
-                                {paginationBetween - 1}
-                            </PaginationLink>
-                        </PaginationItem>
-                    }
-                    {paginationBetween === paginationIndex ?
-                        <PaginationItem active>
-                            <PaginationLink onClick={() => handleCurrent(paginationBetween)}>
-                                {paginationBetween}
-                            </PaginationLink>
-                        </PaginationItem>
-                        :
-                        <PaginationItem>
-                            <PaginationLink onClick={() => handleCurrent(paginationBetween)}>
-                                {paginationBetween}
-                            </PaginationLink>
-                        </PaginationItem>
-                    }
-                    {paginationBetween + 1 === paginationIndex ?
-                        <PaginationItem active>
-                            <PaginationLink onClick={() => handleCurrent(paginationBetween + 1)}>
-                                {paginationBetween + 1}
-                            </PaginationLink>
-                        </PaginationItem>
-                        :
-                        <PaginationItem>
-                            <PaginationLink onClick={() => handleCurrent(paginationBetween + 1)}>
-                                {paginationBetween + 1}
-                            </PaginationLink>
-                        </PaginationItem>
-                    }
-                    {paginationMax === paginationIndex ?
-                        <PaginationItem disabled>
-                            <PaginationLink next />
-                        </PaginationItem>
-                        :
-                        <PaginationItem>
-                            <PaginationLink next onClick={handlePlus} />
-                        </PaginationItem>
-                    }
-                </Pagination>
-            </div>
+            <ToolkitProvider
+                keyField="DuscountId"
+                data={users}
+                columns={columns}
+                exportCSV={{
+                    fileName: 'khachhang.csv',
+                    blobType: 'text/csv;charset=UTF-8'
+                }}
+            >
+                {
+                    props => (
+                        <div>
+                            <BootstrapTable
+                                keyField='DiscountId'
+                                data={users}
+                                columns={columns}
+                                tabIndexCell
+                                striped
+                                hover
+                                condensed
+                                pagination={paginationFactory()}
+                                filter={filterFactory()}
+                                filterPosition="top"
+                                {...props.baseProps} />
+                            <hr />
+                            <MyExportCSV {...props.csvProps}>Xuất File Excel!!</MyExportCSV>
+                            <hr />
+                        </div>
+                    )
+                }
+            </ToolkitProvider>
         </div>
     )
 }

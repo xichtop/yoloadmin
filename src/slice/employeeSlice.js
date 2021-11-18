@@ -1,20 +1,18 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const initialUser = {
+const initialEmployee = {
   user: {
-    Email: '',
+    EmployeeId: '',
     Password: '',
-    Phone: '',
     Fullname: '',
-    Address: '',
-    URLPicture: '',
+    Workphone: '',
   },
   token: '',
 };
 
-const user = createSlice({
+const employee = createSlice({
   name: 'user',
-  initialState: initialUser,
+  initialState: initialEmployee,
   reducers: {
     login: (state, action) => {
       // const newProduct = action.payload;
@@ -23,17 +21,12 @@ const user = createSlice({
 
     logout: () => {
         // const newProduct = action.payload;
-        return initialUser;
+        return initialEmployee;
     },
-
-    update: (state, action) => {
-      // const newProduct = action.payload;
-      return {...action.payload};
-  },
   }
 });
 
 // export const { cartReducer } = cart;
-const { reducer, actions } = user;
-export const { login,  logout, update} = actions;
+const { reducer, actions } = employee;
+export const { login,  logout } = actions;
 export default reducer;

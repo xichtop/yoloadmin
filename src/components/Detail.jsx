@@ -6,6 +6,7 @@ import 'react-notifications-component/dist/theme.css';
 import '../sass/css/infinityorder.css';
 import { useHistory } from "react-router-dom";
 import orderAPI from '../api/orderAPI';
+import { useSelector } from 'react-redux';
 
 // confirm alert
 import { confirmAlert } from 'react-confirm-alert'; // Import
@@ -14,6 +15,10 @@ import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 function OrderItem(props) {
 
     const orderId = props.match.params.slug;
+    
+    const token = useSelector(state => state.employee.token);
+
+    const employeeId = useSelector(state => state.employee.user.EmployeeId);
 
     const initialOrder = {
         OrderId: '1',
@@ -42,7 +47,7 @@ function OrderItem(props) {
     useEffect(() => {
         const fetchItemOrder = async () => {
             try {
-                let result = await orderAPI.getItem(orderId);
+                let result = await orderAPI.getItem(orderId, token);
                 serOrder(result);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
@@ -57,7 +62,7 @@ function OrderItem(props) {
         const fetchUpdateOrder = async () => {
             var result = {};
             try {
-                result = await orderAPI.update(orderId);
+                result = await orderAPI.update(orderId, employeeId, token);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -103,7 +108,7 @@ function OrderItem(props) {
         const fetchConfirmOrder = async () => {
             var result = {};
             try {
-                result = await orderAPI.confirm(orderId);
+                result = await orderAPI.confirm(orderId, employeeId, token);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -144,6 +149,52 @@ function OrderItem(props) {
             closeOnClickOutside: true,
         });
         
+    }
+
+    const hanleDeliver = (OrderId) => {
+        const fetchUpdateOrder = async () => {
+            var result = {};
+            try {
+                result = await orderAPI.deliver(OrderId, employeeId, token);
+            } catch (error) {
+                console.log("Failed to fetch order list: ", error);
+            }
+            if (result.successful == true) {
+                store.addNotification({
+                    title: "Wonderfull!",
+                    message: `Giao hàng thành công!`,
+                    type: "success",
+                    ...configNotify
+                });
+                history.push('/order');
+            } else {
+                store.addNotification({
+                    title: "Error!",
+                    message: `Giao hàng thất bại, vui lòng thử lại sau!`,
+                    type: "warning",
+                    ...configNotify
+                });
+                history.push('/order');
+            }
+        }
+        confirmAlert({
+            title: 'Giao Hàng',
+            message: 'Bạn có chắc chắc muốn giao hàng này không?',
+            buttons: [
+                {
+                    label: 'Có',
+                    onClick: () => fetchUpdateOrder()
+                },
+                {
+                    label: 'Không',
+                    onClick: () => {
+                        history.push('/order');
+                    }
+                }
+            ],
+            closeOnEscape: true,
+            closeOnClickOutside: true,
+        });
     }
 
     const handleBack = () => {
@@ -192,7 +243,14 @@ function OrderItem(props) {
                         <ButtonToggle color="danger" onClick={handleCancel}>Hủy</ButtonToggle>
                     </div> 
                     : 
-                    <ButtonToggle color="info" onClick={handleBack}>Trở về</ButtonToggle>
+                    <div>
+                    {order.Status === 'Confirmed' ? <div>
+                        <ButtonToggle color="info" onClick={handleBack}>Trở về</ButtonToggle>{' '}
+                        <ButtonToggle color="success" onClick={hanleDeliver}>Giao hàng</ButtonToggle>{' '}
+                    </div> 
+                    : 
+                    <ButtonToggle color="info" onClick={handleBack}>Trở về</ButtonToggle>}
+                    </div>
                 }
             </div>
         </article>

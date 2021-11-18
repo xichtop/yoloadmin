@@ -2,31 +2,56 @@ import axiosClient from "./axiosClient";
 
 const productApi = {
 
-  getAll: () => {
-    const url = '/products';
-    return axiosClient.get(url);
-  },
-
   get: (id) => {
-
     const url = `/products/${id}`;
     return axiosClient.get(url);
   },
-
+  
   //Admin
-  updateStatus: (product) => {
+
+  update: (product, token) => {
+    const url = `/products/update`;
+    return axiosClient.post(url, product, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
+  },
+
+  updateStatus: (product, token) => {
     const url = `/products/updatestatus`;
-    return axiosClient.post(url, product);
+    return axiosClient.post(url, product, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 
-  getAllAdmin: () => {
+  updateQuantity: (product, token) => {
+    const url = `/products/updatequantity`;
+    return axiosClient.post(url, product, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
+  },
+
+  getAllAdmin: (token) => {
     const url = '/products/getall';
-    return axiosClient.get(url);
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 
-  addItem: (product) => {
+  addItem: (product, token) => {
     const url = '/products/additem';
-    return axiosClient.post(url, product);
+    return axiosClient.post(url, product, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 }
 

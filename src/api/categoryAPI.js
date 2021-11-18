@@ -9,6 +9,24 @@ const categoryApi = {
   getProductId: (id) => {
     const url = `/categories/${id}`;
     return axiosClient.get(url);
+  },
+
+  getStatisticByMonthAndYear: (month, year, token) => {
+    const url = `/categories/statistic/${month}/${year}`;
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
+  },
+
+  getStatisticByYear: (year, token) => {
+    const url = `/categories/statistic/${year}`;
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   }
 }
 
